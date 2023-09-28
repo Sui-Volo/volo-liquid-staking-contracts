@@ -35,6 +35,47 @@ module liquid_staking::validator_set_tests {
 
     const MIST_PER_SUI: u64 = 1_000_000_000;
 
+    #[test, expected_failure]
+    fun update_more_than_max() {
+        let addr = @0x0;
+        let scenario = test_scenario::begin(addr);
+        {
+            validator_set::test_create(ctx(&mut scenario));
+        };
+
+        next_tx(&mut scenario, addr);
+        {
+            let vldr_set = test_scenario::take_shared<ValidatorSet>(&scenario);
+
+            let vldrs = vector[VALIDATOR_ADDR_1, VALIDATOR_ADDR_2, VALIDATOR_ADDR_3, VALIDATOR_ADDR_4];
+            let priors = vector[100, 101, 102, 0];
+
+            validator_set::test_update_and_sort(&mut vldr_set, vldrs, priors);
+
+            let validators = validator_set::get_validators(&vldr_set);
+
+            test_utils::assert_eq(vector::length<address>(&validators), 4);
+            test_utils::assert_eq(*vector::borrow(&validators, 0), VALIDATOR_ADDR_3);
+            test_utils::assert_eq(*vector::borrow(&validators, 3), VALIDATOR_ADDR_4);
+
+            test_scenario::return_shared<ValidatorSet>(vldr_set);
+        };
+
+        next_tx(&mut scenario, addr);
+        {
+            let vldr_set = test_scenario::take_shared<ValidatorSet>(&scenario);
+
+            let vldrs = vector[VALIDATOR_ADDR_1, VALIDATOR_ADDR_2, VALIDATOR_ADDR_3, VALIDATOR_ADDR_4, @0x5, @0x6, @0x7, @0x8, @0x9, @0x10, @0x11, @0x12, @0x13, @0x14, @0x15, @0x16, @0x17];
+            let priors = vector[100, 102, 101, 110, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+
+            validator_set::test_update_and_sort(&mut vldr_set, vldrs, priors);
+
+            test_scenario::return_shared<ValidatorSet>(vldr_set);
+        };
+
+        test_scenario::end(scenario);
+    }
+
     #[test]
     fun update_and_sort() {
         let addr = @0x0;
