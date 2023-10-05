@@ -18,9 +18,6 @@ module liquid_staking::validator_set {
     use sui::transfer;
 
     friend liquid_staking::native_pool;
-
-    // Track the current version of the module, iterate each upgrade
-    const VERSION: u64 = 1;
     
     const MIST_PER_SUI: u64 = 1_000_000_000;
     const MAX_VLDRS_UPDATE: u64 = 16;
@@ -28,7 +25,6 @@ module liquid_staking::validator_set {
     /* Errors definition */
 
     const E_NO_ACTIVE_VLDRS: u64 = 300;
-    // Calling functions from the wrong package version
     const E_BAD_ARGS: u64 = 301;
     const E_BAD_CONDITION: u64 = 302;
     const E_NOT_FOUND: u64 = 303;
@@ -163,6 +159,8 @@ module liquid_staking::validator_set {
 
             i = i + 1;
         };
+
+        assert!(vec_map::size(&self.validators) < MAX_VLDRS_UPDATE, E_TOO_MANY_VLDRS);
     }
 
     fun update_validator(self: &mut ValidatorSet, validator: address, priority: u64) {
