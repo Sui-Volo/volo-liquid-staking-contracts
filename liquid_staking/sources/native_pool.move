@@ -60,17 +60,6 @@ module liquid_staking::native_pool {
         sui_amount: u64
     }
 
-    struct TicketMintedEvent has copy, drop {
-        id: ID,
-        principal_value: u64,
-        frozen_to: u64,
-    }
-
-    struct TicketBurnedEvent has copy, drop {
-        id: ID,
-        principal_value: u64,
-    }
-
     struct MinStakeChangedEvent has copy, drop {
         prev_value: u64,
         new_value: u64
