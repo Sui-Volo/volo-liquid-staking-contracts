@@ -145,6 +145,7 @@ module liquid_staking::validator_set {
         self.sorted_validators = sorted;
     }
 
+    // @dev add or update validator and priority
     public(friend) fun update_validators(self: &mut ValidatorSet, validators: vector<address>, priorities: vector<u64>) {
         let length = vector::length(&validators);
         assert!(length < MAX_VLDRS_UPDATE, E_TOO_MANY_VLDRS);
@@ -227,7 +228,10 @@ module liquid_staking::validator_set {
 
             let staked_sui_to_withdraw;
             let rest_requested_amount = requested_amount - balance::value(&total_withdrawn);
-            if (rest_requested_amount >= MIST_PER_SUI && principal_value > rest_requested_amount && principal_value - rest_requested_amount >= MIST_PER_SUI) {
+            if (rest_requested_amount < MIST_PER_SUI) {
+                rest_requested_amount = MIST_PER_SUI
+            };
+            if (principal_value > rest_requested_amount && principal_value - rest_requested_amount >= MIST_PER_SUI) {
                 // it's possible to split StakedSui
                 staked_sui_to_withdraw = staking_pool::split(staked_sui_mut_ref, rest_requested_amount, ctx);
                 principal_value = rest_requested_amount;

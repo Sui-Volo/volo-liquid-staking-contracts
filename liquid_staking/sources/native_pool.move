@@ -46,6 +46,7 @@ module liquid_staking::native_pool {
     const E_REWARD_NOT_IN_THRESHOLD: u64 = 107;
     const E_BAD_SHARES: u64 = 108;
     const E_TOO_BIG_PERCENT: u64 = 109;
+    const E_NOT_ENOUGH_BALANCE: u64 = 110;
 
     /* Events */
     struct StakedEvent has copy, drop {
@@ -188,7 +189,8 @@ module liquid_staking::native_pool {
         *table::borrow(&self.total_staked, self.staked_update_epoch) + pending
     }
 
-    // returns total staked for active epoch
+    /// returns total staked for active epoch
+    /// active stake can be unstaked
     public fun get_total_active_stake(self: &NativePool, ctx: &mut TxContext): u64 {
         let last_active_epoch = self.staked_update_epoch;
         let current_epoch = tx_context::epoch(ctx);
@@ -196,8 +198,9 @@ module liquid_staking::native_pool {
         if (last_active_epoch > current_epoch) {
             last_active_epoch = current_epoch;
         };
-
-        *table::borrow(&self.total_staked, last_active_epoch)
+        
+        let pending = get_pending(self);
+        *table::borrow(&self.total_staked, last_active_epoch) + pending
     }
 
     public fun get_total_rewards(self: &NativePool): u64 {
@@ -235,7 +238,7 @@ module liquid_staking::native_pool {
     // we can allow to stake less than 1 SUI
     public entry fun change_min_stake(self: &mut NativePool, _owner_cap: &OwnerCap, value: u64) {
         assert_version(self);
-        assert!(value > 0, E_LIMIT_TOO_LOW);
+        assert!(value > 1000, E_LIMIT_TOO_LOW);
 
         event::emit(MinStakeChangedEvent {
             prev_value: self.min_stake,
@@ -474,6 +477,11 @@ module liquid_staking::native_pool {
     fun stake_pool(self: &mut NativePool, wrapper: &mut SuiSystemState, ctx: &mut TxContext) {
         let pending_value = coin::value(&self.pending);
 
+        let tickets_supply = unstake_ticket::get_total_supply(&self.ticket_metadata);
+        if (pending_value < tickets_supply) {
+            return
+        };
+        pending_value = pending_value - tickets_supply;
         if (pending_value < ONE_SUI) {
             return
         };
@@ -581,10 +589,12 @@ module liquid_staking::native_pool {
         ctx: &mut TxContext
     ): Coin<SUI> {
 
+        assert!(vector::length(&validators) > 0, E_NOTHING_TO_UNSTAKE);
         let i = vector::length(&validators) - 1;
 
-        let total_removed_balance = balance::zero<SUI>();
-        let total_removed_value = 0;
+        let total_removed_value = coin::value(&self.pending);
+        let total_removed_balance = coin::into_balance(coin::split(&mut self.pending, total_removed_value, ctx));
+
         let collectable_reward = 0;
 
         while (total_removed_value < amount_to_unstake) {
@@ -624,6 +634,7 @@ module liquid_staking::native_pool {
         };
 
         // extract our fees
+        assert!(balance::value(&total_removed_balance) >= fee + collectable_reward, E_NOT_ENOUGH_BALANCE);
         let fee_balance = balance::split(&mut total_removed_balance, fee + collectable_reward);
         coin::join(&mut self.collectable_fee, coin::from_balance(fee_balance, ctx));
 
@@ -651,6 +662,9 @@ module liquid_staking::native_pool {
 
     // unstake validators with zero priority and stake to top validator
     public entry fun rebalance(self: &mut NativePool, wrapper: &mut SuiSystemState, ctx: &mut TxContext) {
+        assert_version(self);
+        when_not_paused(self);
+
         // calculate total stake of validators 
         let validators = validator_set::get_bad_validators(&self.validator_set);
         let unstaked_sui = unstake_amount_from_validators(self, wrapper, MAX_UINT_64, 0, validators, ctx);
