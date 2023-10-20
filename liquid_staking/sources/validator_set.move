@@ -54,6 +54,7 @@ module liquid_staking::validator_set {
         vaults: Table<address, Vault>, // validator => Vault
         validators: VecMap<address, u64>,
         sorted_validators: vector<address>,
+        is_sorted: bool,
     }
 
     // called only once while native_pool init
@@ -63,6 +64,7 @@ module liquid_staking::validator_set {
             vaults: table::new<address, Vault>(ctx),
             validators: vec_map::empty<address, u64>(),
             sorted_validators: vector::empty<address>(),
+            is_sorted: false,
         }
     }
 
@@ -142,6 +144,7 @@ module liquid_staking::validator_set {
         event::emit(ValidatorsSorted{
             validators: sorted,
         });
+        self.is_sorted = true;
         self.sorted_validators = sorted;
     }
 
@@ -159,6 +162,10 @@ module liquid_staking::validator_set {
             update_validator(self, vldr_address, vldr_prior);
 
             i = i + 1;
+        };
+
+        if (length > 0) {
+            self.is_sorted = false;
         };
 
         assert!(vec_map::size(&self.validators) < MAX_VLDRS_UPDATE, E_TOO_MANY_VLDRS);
