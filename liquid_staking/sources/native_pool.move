@@ -347,7 +347,11 @@ module liquid_staking::native_pool {
     }
 
     fun sub_rewards_unsafe(self: &mut NativePool, value: u64) {
-        self.total_rewards = self.total_rewards - value;
+        if (value > self.total_rewards) {
+            self.total_rewards = 0;
+        } else {
+            self.total_rewards = self.total_rewards - value;
+        };
         event::emit(RewardsUpdated {
             value: self.total_rewards,
         });
