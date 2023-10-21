@@ -54,6 +54,7 @@ module liquid_staking::validator_set {
         vaults: Table<address, Vault>, // validator => Vault
         validators: VecMap<address, u64>,
         sorted_validators: vector<address>,
+        is_sorted: bool,
     }
 
     // called only once while native_pool init
@@ -63,6 +64,7 @@ module liquid_staking::validator_set {
             vaults: table::new<address, Vault>(ctx),
             validators: vec_map::empty<address, u64>(),
             sorted_validators: vector::empty<address>(),
+            is_sorted: false,
         }
     }
 
@@ -142,9 +144,11 @@ module liquid_staking::validator_set {
         event::emit(ValidatorsSorted{
             validators: sorted,
         });
+        self.is_sorted = true;
         self.sorted_validators = sorted;
     }
 
+    // @dev add or update validator and priority
     public(friend) fun update_validators(self: &mut ValidatorSet, validators: vector<address>, priorities: vector<u64>) {
         let length = vector::length(&validators);
         assert!(length < MAX_VLDRS_UPDATE, E_TOO_MANY_VLDRS);
@@ -158,6 +162,10 @@ module liquid_staking::validator_set {
             update_validator(self, vldr_address, vldr_prior);
 
             i = i + 1;
+        };
+
+        if (length > 0) {
+            self.is_sorted = false;
         };
 
         assert!(vec_map::size(&self.validators) < MAX_VLDRS_UPDATE, E_TOO_MANY_VLDRS);
@@ -227,7 +235,10 @@ module liquid_staking::validator_set {
 
             let staked_sui_to_withdraw;
             let rest_requested_amount = requested_amount - balance::value(&total_withdrawn);
-            if (rest_requested_amount >= MIST_PER_SUI && principal_value > rest_requested_amount && principal_value - rest_requested_amount >= MIST_PER_SUI) {
+            if (rest_requested_amount < MIST_PER_SUI) {
+                rest_requested_amount = MIST_PER_SUI
+            };
+            if (principal_value > rest_requested_amount && principal_value - rest_requested_amount >= MIST_PER_SUI) {
                 // it's possible to split StakedSui
                 staked_sui_to_withdraw = staking_pool::split(staked_sui_mut_ref, rest_requested_amount, ctx);
                 principal_value = rest_requested_amount;

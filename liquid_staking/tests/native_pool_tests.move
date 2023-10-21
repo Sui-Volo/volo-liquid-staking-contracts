@@ -174,7 +174,7 @@ module liquid_staking::native_pool_tests {
         // Stake SUI, epoch = 1
         next_tx(&mut scenario, SENDER);
         {
-            let sui = coin::mint_for_testing<SUI>(MIST_PER_SUI, ctx(&mut scenario)); // 1 SUI
+            let sui = coin::mint_for_testing<SUI>(MIST_PER_SUI * 2, ctx(&mut scenario)); // 1 SUI
             let pool = test_scenario::take_shared<NativePool>(&scenario);
             let metadata = test_scenario::take_shared<Metadata<CERT>>(&scenario);
             let system_state = test_scenario::take_shared<SuiSystemState>(&scenario);
@@ -193,16 +193,16 @@ module liquid_staking::native_pool_tests {
             let pool = test_scenario::take_shared<NativePool>(&scenario);
 
             let total_staked = native_pool::get_total_staked(&pool);
-            test_utils::assert_eq(total_staked, MIST_PER_SUI * 101);
+            test_utils::assert_eq(total_staked, MIST_PER_SUI * 102);
             let total_active_stake = native_pool::get_total_active_stake(&pool, ctx(&mut scenario));
-            test_utils::assert_eq(total_active_stake, MIST_PER_SUI * 100);
+            test_utils::assert_eq(total_active_stake, MIST_PER_SUI * 101);
 
             advance_epoch(&mut scenario);
 
             let total_staked = native_pool::get_total_staked(&pool);
-            test_utils::assert_eq(total_staked, MIST_PER_SUI * 101);
+            test_utils::assert_eq(total_staked, MIST_PER_SUI * 102);
             let total_active_stake = native_pool::get_total_active_stake(&pool, ctx(&mut scenario));
-            test_utils::assert_eq(total_active_stake, MIST_PER_SUI * 101);
+            test_utils::assert_eq(total_active_stake, MIST_PER_SUI * 102);
 
             test_scenario::return_shared(pool);
         };
@@ -223,9 +223,9 @@ module liquid_staking::native_pool_tests {
             coin::burn_for_testing(sui);
 
             let total_staked = native_pool::get_total_staked(&pool);
-            test_utils::assert_eq(total_staked, MIST_PER_SUI * 100);
+            test_utils::assert_eq(total_staked, MIST_PER_SUI * 101);
             let total_active_stake = native_pool::get_total_active_stake(&pool, ctx);
-            test_utils::assert_eq(total_active_stake, MIST_PER_SUI * 100);
+            test_utils::assert_eq(total_active_stake, MIST_PER_SUI * 101);
 
             let ticket_supply = native_pool::get_ticket_supply(&pool);
             test_utils::assert_eq(ticket_supply, MIST_PER_SUI);
@@ -436,9 +436,9 @@ module liquid_staking::native_pool_tests {
             let owner_cap = test_scenario::take_from_sender<OwnerCap>(&scenario);
             let pool = test_scenario::take_shared<NativePool>(&scenario);
 
-            native_pool::change_min_stake(&mut pool, &owner_cap, 2);
+            native_pool::change_min_stake(&mut pool, &owner_cap, 2002);
             let min_stake = native_pool::get_min_stake(&pool);
-            test_utils::assert_eq(min_stake, 2);
+            test_utils::assert_eq(min_stake, 2002);
 
             test_scenario::return_to_address<OwnerCap>(SENDER, owner_cap);
             test_scenario::return_shared(pool);
