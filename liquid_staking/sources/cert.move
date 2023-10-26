@@ -50,9 +50,9 @@ module liquid_staking::cert {
     fun init(witness: CERT, ctx: &mut TxContext) {
         // create coin with metadata
         let (treasury_cap, metadata) = coin::create_currency<CERT>(
-            witness, DECIMALS, b"voloSUI", b"Volo Staked SUI",
+            witness, DECIMALS, b"vSUI", b"Volo Staked SUI",
             b"Volo's SUI staking solution provides the best user experience and highest level of decentralization, security, combined with an attractive reward mechanism and instant staking liquidity through a bond-like synthetic token called voloSUI.",
-            option::some<Url>(url::new_unsafe_from_bytes(b"https://volo.fi/voloSUI.png")),
+            option::some<Url>(url::new_unsafe_from_bytes(b"https://volo.fi/vSUI.png")),
             ctx
         );
         transfer::public_freeze_object(metadata);
