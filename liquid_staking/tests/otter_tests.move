@@ -5,13 +5,13 @@ module liquid_staking::otter_tests {
 
     use liquid_staking::native_pool::{Self, NativePool};
     use liquid_staking::cert::{Self, Metadata, CERT};
-    use liquid_staking::ownership::{Self, OperatorCap, OwnerCap};
+    use liquid_staking::ownership::{Self};
     use liquid_staking::unstake_ticket::UnstakeTicket;
     use sui::test_scenario::{Self, next_tx, ctx, Scenario};
     use sui::sui::{SUI};
     use sui::coin;
     use std::vector;
-    use sui::clock;
+    // use sui::clock;
     use std::debug;
     use std::string;
     use sui_system::sui_system::{SuiSystemState};
