@@ -218,12 +218,14 @@ module liquid_staking::validator_set {
         let total_withdrawn_principal_value = 0;
 
         if (!table::contains(&mut self.vaults, validator)) {
-            // validator could be removed from list in case if no vaults created
-            vec_map::remove<address, u64>(&mut self.validators, &validator);
-            let (exist, index) = vector::index_of(&self.sorted_validators, &validator);
-            assert!(exist, E_NOT_FOUND);
-            vector::swap_remove(&mut self.sorted_validators, index);
-
+            let prior = *vec_map::get(&self.validators, &validator);
+            if (prior == 0) {
+                // validator could be removed from list in case if no vaults created
+                vec_map::remove<address, u64>(&mut self.validators, &validator);
+                let (exist, index) = vector::index_of(&self.sorted_validators, &validator);
+                assert!(exist, E_NOT_FOUND);
+                vector::swap_remove(&mut self.sorted_validators, index);
+            };
             return (total_withdrawn, 0, 0)
         };
         let vault_mut_ref = table::borrow_mut(&mut self.vaults, validator);
