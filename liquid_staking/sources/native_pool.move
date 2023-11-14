@@ -290,6 +290,7 @@ module liquid_staking::native_pool {
     // update validators and their priorities in validator set
     public entry fun update_validators(self: &mut NativePool, validators: vector<address>, priorities: vector<u64>, _operator_cap: &OperatorCap) {
         assert_version(self);
+        when_not_paused(self);
 
         validator_set::update_validators(&mut self.validator_set, validators, priorities);
     }
@@ -513,6 +514,20 @@ module liquid_staking::native_pool {
     public entry fun mint_ticket(self: &mut NativePool, metadata: &mut Metadata<CERT>, cert: Coin<CERT>, ctx: &mut TxContext) {
         let ticket = mint_ticket_non_entry(self, metadata, cert, ctx);
         unstake_ticket::transfer(ticket, tx_context::sender(ctx));
+    }
+
+    public fun preview_ticket_epoch(self: &NativePool, metadata: &Metadata<CERT>, cert: &Coin<CERT>, ctx: &mut TxContext): u64 {
+        let shares = coin::value(cert);
+        let unstake_amount = from_shares(self, metadata, shares);
+
+        // if not enough active stakes to do instant unstake
+        let tickets_supply_after_mint = unstake_ticket::get_total_supply(&self.ticket_metadata) + unstake_amount;
+        let total_active_stake = get_total_active_stake(self, ctx);
+        let unlocked_in_epoch = tx_context::epoch(ctx);
+        if (tickets_supply_after_mint > total_active_stake) {
+            return unlocked_in_epoch + 1
+        };
+        unlocked_in_epoch
     }
 
     /// burns CERT and put output amount of SUI to it
