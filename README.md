@@ -1,5 +1,8 @@
-# sui-smart-contracts
+# sui-smart-contracts (Deprecated)
 
+> [!WARNING]
+> This repository is deprecated and is no longer maintained.
+Please use the new repository instead: [Go to New Repo](https://github.com/Sui-Volo/volo-smart-contracts)
 ## Setup
 ### 1. Install SUI binaries 
 Use the latest release as the tag
