@@ -14,3 +14,17 @@ bash scripts/update_validators.bash ${env}
 bash scripts/transfer_operator.bash ${env} ${recipient}
 bash scripts/transfer_owner.bash ${env} ${recipient}
 ```
+
+## Integration
+
+To integrate volo liquid staking in your Move project.
+
+### Configure
+
+Edit `Move.toml` file.
+
+```
+[dependencies]
+liquid_staking = { git = "https://github.com/Sui-Volo/volo-liquid-staking-contracts.git", subdir = "liquid_staking", rev = "mainnet-v1.0.0" }
+Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/mainnet", override = true }
+```
